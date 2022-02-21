@@ -10,3 +10,11 @@ app.use('/', route);
 app.listen(process.env.PORT || 3000, function() {
     console.log('Express app running on port ' + (process.env.PORT || 3000))
 });
+
+
+
+const port=8000;
+
+app.listen(port, ()=>{
+    console.log(`listening  to the port no ${port}`);
+});

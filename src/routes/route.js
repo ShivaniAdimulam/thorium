@@ -68,6 +68,73 @@ router.post("/test-post-4", function(req, res) {
     let ele= req.body.element
     arr.push(ele)
     res.send(  { msg: arr , status: true }  )
-})
+});
+
+
+playersDetails = []
+router.post("/players", function(req,res){
+    let playerDetail = req.body
+    let detail = true
+    for(let i=0;i<playersDetails.length;i++){
+        if(playersDetails[i]["name"]=== playerDetail["name"]){
+            detail=false
+            break
+        }
+
+    }
+    if(detail == true){
+        playersDetails.push(playerDetail)
+        res.send("Details saved successfully")
+    }else{
+        res.send("Player details is already exist in the system")
+    }
+    console.log(playersDetails)
+});
+
+//quesstion 2 feb 23 -2022
+// router.post("/players/:playerName/bookings/:bookingId", function(req,res){
+//     let name = req.params.playerName
+//     let bookI = req.params.bookingId
+//     let isPlayerAbsent = true
+//     for(let i=0;i<playersDetails.length;i++){
+//         if(playerN==playersDetails[i]["Name"] && bookI!=playersDetails[i]["bookings"]["bookingNumber"]){
+//             res.send(playersDetails["bookingNumber"]=bookI)
+//         }else if(playerN!=playersDetails[i]["Name"]){
+//             res.send("something not being found")
+
+//         }else{
+//             res.send("bookingalready done")
+//         }
+//     }
+
+// });
+
+
+router.post("/players/:playerName/bookings/:bookingId", function(req,res){
+    let name = req.params.playerName
+    //let bookI = req.params.bookingId
+    let isPlayerAbsent = true
+    for(let i=0;i<playersDetails.length;i++){
+        if(name==playersDetails[i].name){
+            isPlayerAbsent = false
+        }
+    }
+    if(isPlayerAbsent){
+        return res.send("Player not present")
+    }
+    let booking = req.body
+    let bookingId = req.params.bookingId
+    for(let i =0; i<playersDetails.length;i++){
+        if(name==playersDetails[i].name){
+            for(let j=0;j<playersDetails[i].bookings.length;j++){
+                if(playersDetails[i].bookings[j].bookingNumber ==bookingId){
+                    return res.send('booking with this id is already present for the player')
+                }
+            }
+            playersDetails[i].bookings.push(booking)
+        }
+    }
+    res.send(playersDetails)
+});
 
 module.exports = router;

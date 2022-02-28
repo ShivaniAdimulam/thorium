@@ -1,5 +1,7 @@
 const UserModel= require("../models/userModel")
 
+
+
 const createUser= async function (req, res) {
     let data= req.body
     let savedData= await UserModel.create(data)
@@ -11,5 +13,7 @@ const getUsersData= async function (req, res) {
     res.send({msg: allUsers})
 }
 
+
 module.exports.createUser= createUser
 module.exports.getUsersData= getUsersData
+

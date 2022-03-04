@@ -8,6 +8,16 @@ router.get("/test-me", function (req, res) {
     res.send("My first ever api!")
 })
 
+router.get("/hello", function (req, res) {
+    res.send("hello!")
+})
+
+
+router.get("/test", function (req, res) {
+    res.send("testing done!")
+})
+
+
 router.post("/createUser", UserController.createUser  )
 
 router.get("/getUsersData", UserController.getUsersData)
@@ -18,6 +28,8 @@ router.get("/getBooksData", BookController.getBooksData)
 
 router.post("/updateBooks", BookController.updateBooks)
 router.post("/deleteBooks", BookController.deleteBooks)
+
+
 
 //MOMENT JS
 const moment = require('moment');

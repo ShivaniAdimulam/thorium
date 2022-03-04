@@ -1,4 +1,5 @@
 const { count } = require("console")
+const { updateOne, findById } = require("../models/authorModel")
 //const { default: mongoose } = require("mongoose")
 //const { findById } = require("../models/authorModel")
 const authorModel = require("../models/authorModel")
@@ -70,6 +71,49 @@ const getBooksWithAuthorDetails = async function (req, res) {
 
 }
 
+
+const updateKeyandPrice = async function (req,res){
+    //let upTrueKey = await publisherModel.find({publisher:{$in:['Penguin','HarperCollins'] },isHardCover: true} ).select({_id:1})  //.populate('publisher')
+   // { $set: { isHardCover: true} } 
+   //console.log(upTrueKey)
+   //let final= await authorModel.find({_id:"621f63a193cc8452da4d1d80",isHardCover: true})
+   //res.send({data: final})
+   //res.send({data:upTrueKey})
+   let hardCoverPublishers = await publisherModel.find({
+       name: {$in: ["Penguin","HarperCollins"]},
+    });
+    let publisherIds = hardCoverPublishers.map((p)=> p._id);
+    await bookModel.updateMany(
+        {publisher: {$in: publisherIds}},
+        {isHardCover:true}
+    );
+
+
+    let highRatedAuthors = await authorModel.find({ rating: { $gt: 3.5 } });
+    let authorIds = highRatedAuthors.map((a) => a._id);
+  
+    await bookModel.updateMany(
+      { author: { $in: authorIds } },
+      { $inc: { price: 10 } }
+    );
+  
+    let updateKeyandPrice = await bookModel.find();
+    res.send({ updatedBookCollection: updateKeyandPrice });
+    
+}
+
+   
+// const updatePrice =async function(req,res){
+//    // let upPrice = await bookModel.find({ratings:{$gt :3.5}},bookModel.updateOne({ $inc: { price: 10 } }) )       //{sales : {$gt: 20}}    
+//    //let upPrice=await bookModel.updateOne({ratings:{$gt :3.5}},{ $inc: { price: 10 } })   //.....
+//    //let rate=await authorModel.find({ratings:{$gt:3.5}})
+//    //let upPrice= await bookModel.updateOne({$inc: {price:10}})
+//    let story = await bookModel.find({ratings:{$gt:3.5}}).populate('author').updateOne({$inc: {price:10}});
+//    res.send({data: story})
+// }
+
 module.exports.createBook= createBook
 //module.exports.getBooksData= getBooksData
 module.exports.getBooksWithAuthorDetails = getBooksWithAuthorDetails
+module.exports.updateKeyandPrice=updateKeyandPrice
+//module.exports.updatePrice=updatePrice

@@ -71,6 +71,16 @@ const getBlogsData = async function (req, res) {
         // let allBlogs = await BlogModel.find(filterquery)
         // console.log(allBlogs)
         //const data=req.query
+
+        // let filters = req.query     //.......s
+        // if (filters) {
+        //     let blogs = await BlogsModel.find({ filters, isDeleted: false, isPublished: true })
+        //     if (blogs.length == 0) return res.status(404).send({ status: false, msg: "no blogs found" })
+        //     res.status(200).send({ status: true, data: blogs })
+        // } else {
+        //     let blogs = await BlogsModel.find({ isDeleted: false, isPublished: true })
+        //     if (blogs.length == 0) return res.status(404).send({ status: false, msg: "no blogs found" })
+        //     res.status(200).send({ status: true, data: blogs })
         let authorId= req.query.authorId
         let category=req.query.category
         let tags= req.query.tags
@@ -108,18 +118,15 @@ const updateBlogs = async function (req, res) {
         // )
 
         /// res.status(200).send({ msg: allBlogs })
-        let updatedblogs1=await BlogModel.findOneAndUpdate({_id:blogId,title:title,body:body},{new:true})
+        let allblog = await BlogModel.findOneAndUpdate(
+            { _id: blogId, isDeleted: false },
+            { $set: { title: title, body: body, isPublished: true, publishedAt: Date.now() }, $push: { tags: tags, subcategory: subcategory } },
+            { new: true })
 
-        
-        let updatedBlogs=await BlogModel.findOneAndUpdate({_id:blogId},{$addToSet:{tags:tags},$addToSet:{subcategory:subcategory}},
-            
-            {new:true})
-        let updatedblogs3=await BlogModel.findOneAndUpdate({_id:blogId},{isPublished:true,publishedAt:Date.now()},{new:true})
-
-        res.status(200).send({ msg: updatedblogs3 })  
+        res.status(200).send({ msg: allblog })  
 
         // } else 
-        if (blog == null) {
+        if (!blog) {
             res.status(404).send({ msg: "no blog found" })
         }
     } catch (err) {
@@ -153,6 +160,7 @@ const deletePath = async function (req, res) {
 
 
 const deleteBlog = async function (req, res) {
+    try{
     let input = req.query
         
         if(Object.keys(input).length == 0) return res.status(400).send({status: false, msg: "please provide input data" })
@@ -160,6 +168,10 @@ const deleteBlog = async function (req, res) {
         let deletedBlog = await BlogModel.updateMany({ $and: [input, { isDeleted: false }] }, { $set: { isDeleted: true, deletedAt: Date.now() } }, { new: true })
         
         res.status(200).send()
+    }catch(err){
+        console.log(err)
+        res.status(500).send({ msg: err.message })
+    }
 
 //    const data = req.query
 //         console.log(data)

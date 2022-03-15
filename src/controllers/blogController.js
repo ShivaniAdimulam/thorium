@@ -70,8 +70,14 @@ const getBlogsData = async function (req, res) {
         // }
         // let allBlogs = await BlogModel.find(filterquery)
         // console.log(allBlogs)
-        const data=req.query
-        let allBlogs = await BlogModel.find(data,{ isDeleted: false}, {isPublished: true }).populate("authorId")
+        //const data=req.query
+        let authorId= req.query.authorId
+        let category=req.query.category
+        let tags= req.query.tags
+        let subcategory=req.query.subcategory
+        //let allBlogs = await BlogModel.find({ isDeleted: false,isPublished: true },{$or:[{category:category},{authorId:authorId},{tags:{$all:[tags]}},{subcategory:{$all:[subcategory]}}]}).populate("authorId")
+        let allBlogs = await BlogModel.find({isdeleted : false,isPublished:true, $or:[{category:category}, {authorId:authorId},{tags: {$all:[tags]}},{subcategory: {$all:[subcategory]}}]})
+
         console.log(allBlogs)
         if (allBlogs.length > 0) res.status(200).send({ msg: allBlogs, status: true })
         else res.status(404).send({ msg: "No blog found", status: false })
@@ -85,19 +91,33 @@ const getBlogsData = async function (req, res) {
 
 const updateBlogs = async function (req, res) {
     try {
-        let data = req.body
+        //let data = req.body
+        let title=req.body.title
+        let body= req.body.body
+        let tags=req.body.tags
+        let subcategory=req.body.subcategory
         let blogId = req.params.blogId
         let blog = await BlogModel.findOne({ _id: blogId, isDeleted: false })
         // if (blog) {
-        let allBlogs = await BlogModel.findOneAndUpdate({ _id: blogId, isDeleted: false },//condition
-            {
-                publishedAt: Date.now(), //update in data
-                isPublished: true, ...data
-            },  //update in data
-            { new: true } // new: true - will give you back the updated document // Upsert: it finds and updates the document but if the doc is not found(i.e it does not exist) then it creates a new document i.e UPdate Or inSERT  
-        )
+        /// let allBlogs = await BlogModel.findOneAndUpdate({ _id: blogId, isDeleted: false },//condition
+        //     {
+        //         publishedAt: Date.now(), //update in data
+        //         isPublished: true,title:title,body:body,$addToSet:{tags:tags},$addToSet:{subcategory:subcategory}
+        //     },  //update in data
+        //     { new: true } // new: true - will give you back the updated document // Upsert: it finds and updates the document but if the doc is not found(i.e it does not exist) then it creates a new document i.e UPdate Or inSERT  
+        // )
 
-        res.status(200).send({ msg: allBlogs })
+        /// res.status(200).send({ msg: allBlogs })
+        let updatedblogs1=await BlogModel.findOneAndUpdate({_id:blogId,title:title,body:body},{new:true})
+
+        
+        let updatedBlogs=await BlogModel.findOneAndUpdate({_id:blogId},{$addToSet:{tags:tags},$addToSet:{subcategory:subcategory}},
+            
+            {new:true})
+        let updatedblogs3=await BlogModel.findOneAndUpdate({_id:blogId},{isPublished:true,publishedAt:Date.now()},{new:true})
+
+        res.status(200).send({ msg: updatedblogs3 })  
+
         // } else 
         if (blog == null) {
             res.status(404).send({ msg: "no blog found" })
@@ -133,21 +153,28 @@ const deletePath = async function (req, res) {
 
 
 const deleteBlog = async function (req, res) {
+    let input = req.query
+        
+        if(Object.keys(input).length == 0) return res.status(400).send({status: false, msg: "please provide input data" })
 
-    const data = req.query
-        console.log(data)
+        let deletedBlog = await BlogModel.updateMany({ $and: [input, { isDeleted: false }] }, { $set: { isDeleted: true, deletedAt: Date.now() } }, { new: true })
+        
+        res.status(200).send()
 
-        if (!data) return res.status(400).send({ error: "Please enter some data to campare" })
+//    const data = req.query
+//         console.log(data)
 
-        const timeDate = moment()
+//         if (data=={}) return res.status(400).send({ error: "Please enter some data to campare" })
 
-        const dataforUpdation = { ...data , isDeleted : true , deletedAt : timeDate}
+//         //const timeDate = moment()
 
-        const result = await BlogModel.updateMany(data, dataforUpdation , { new: true })
+//         const dataforUpdation = { ...data , isDeleted : true , deletedAt : Date.now()}
 
-        if (!result) res.status(404).send({ error: " No data found" })
+//         const result = await BlogModel.updateMany(data, dataforUpdation , { new: true })
 
-        res.status(200).send({ data: result })
+//         if (!result) res.status(404).send({ error: " No data found" })
+
+//         res.status(200).send({ data: result })
     // let category = req.query.category
     // let authorId = req.query.authorId
     // let tags = req.query.tags

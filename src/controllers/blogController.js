@@ -31,6 +31,7 @@ const createAuthor = async function (req, res) {
 
 const createBlog = async function (req, res) {
     try {
+        
         let blog = req.body
         let authorId = blog.authorId
 
@@ -42,6 +43,7 @@ const createBlog = async function (req, res) {
 
         let blogCreated = await BlogModel.create(blog)
         return res.status(200).send({ data: blogCreated })
+        
     } catch (error) {
         console.log(error)
         res.status(500).send({ msg: error.message })

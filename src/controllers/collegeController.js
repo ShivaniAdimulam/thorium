@@ -3,16 +3,17 @@ const internModel = require("../models/internModel")
 const collegeModel = require("../models/collegeModel");
 const { default: mongoose } = require("mongoose");
 const { builtinModules } = require("module");
+const validator = require("../validator/validator");
 
-const isValidRequestBody = function (requestBody) {
-    return Object.keys(requestBody).length > 0
-}
+// const isValidRequestBody = function (requestBody) {
+//     return Object.keys(requestBody).length > 0
+// }
 
 
 const registerCollege = async function (req, res) {
     try {
         let requestBody = req.body
-        if (!isValidRequestBody(requestBody)) {
+        if (!validator.isValidRequestBody(requestBody)) {
             res.status(400).send({ status: false, message: 'Invalid request parameters. Please provide college details' })
             return
         }
@@ -32,7 +33,7 @@ const registerCollege = async function (req, res) {
         }
 
         let collegeCreated = await collegeModel.create(collegeData)
-        return res.status(200).send({ message: 'new blog created successfully', data: collegeCreated })
+        return res.status(200).send({ message: 'new college created successfully', data: collegeCreated })
     } catch (error) {
 
         console.log(error)
@@ -44,32 +45,101 @@ const registerCollege = async function (req, res) {
 
 const getCollegeDetails = async function (req, res) {
     try{
-    let filterquery = { isDeleted: false }
-    let queryParams = req.query
 
-    if (isValidRequestBody(queryParams)) {
-        const {collegeId,fullName} = queryParams
-
-        if (queryParams.collegeId) {                                            // && isValidObjectId(collegeId)
-            filterquery['collegeId'] = collegeId
+        
+        let body = req.query;
+        if (!validator.isValidRequestBody(body)){
+            return res.status(400).send({
+                status: false,
+                message: "Query parameter not found, Please provide a valid query to retrive the  details",
+            });
         }
+        else {
+            let collegeName = req.query.collegeName;
+            if(!validator.isValid(collegeName)){
+                res.status(400).send({status:false,messege:"Please provide The College Name"});
+                return
+            }
+            const lowerFormCollege = collegeName.toLowerCase();
+            let college = await collegeModel.findOne({ name: lowerFormCollege,isDeleted:false});
+            if (!college) {
+                res.status(400).send({
+                    status: false,
+                    message: `The '${collegeName}' is not available or valid college name. Please enter a valid college name to search interns details.`,
+                });
+                return;
+            } else {
+                let collId = college._id;
+                let name = college.name;
+                let fullName = college.fullName;
+                let logoLink = college.logoLink;
 
-        if (queryParams.fullName) {
-            filterquery['fullName'] = fullName.trim()
+                let previousAppliedInterns = await internModel
+                    .find({ collegeId: collId,isDeleted:false })
+                    .select({ _id: 1, name: 1, email: 1, mobile: 1 });
+
+                if (!previousAppliedInterns.length > 0) {
+                    let Data = {
+                        name: name,
+                        fullName: fullName,
+                        logoLink: logoLink,
+                        interests: `there is no interns applied for ${fullName}`
+                    };
+                    res.status(200).send({status: true,data:Data});
+
+                    return;
+                } else {
+                    let Data = {
+                        name: name,
+                        fullName: fullName,
+                        logoLink: logoLink,
+                        interests: previousAppliedInterns,
+                    };
+                    res.status(200).send({
+                        status: true,
+                        message: `Successfully retrived all interns details of ${fullName}`,
+                        data: Data,
+                    });
+                }
+            }
         }
+    // let filterquery = { isDeleted: false }
+    // let queryParams = req.query
+    // const {collegeId,name} = queryParams
 
-    }
 
-    let iDetails = await internModel.find({ collegeId: req.query.collegeId }, { select: { _id: 1, name: 1, email: 1, mobile: 1 } });
 
-    let cDetails = await collegeModel.find({ fullName: req.query.fullName });  //or filterquery
+    // if (isValidRequestBody(queryParams)) {
+    //     const {collegeId,name} = queryParams
 
-    arr = [];
-    arr.push(iDetails);
+    //     if (queryParams.collegeId) {                                            // && isValidObjectId(collegeId)
+    //         filterquery['collegeId'] = collegeId
+    //     }
 
-    cDetails.intrest = arr
+    //     if (queryParams.name) {
+    //         filterquery['name'] = name.trim()
+    //     }
 
-    res.status(200).send({ msg: "Data for this college", data: cDetails, status: true })
+    // }
+
+
+    // const collegeData = {
+    //     name,
+    //     fullName,
+    //     logoLink,
+    //     intrests:[]
+    //    } 
+    // let iDetails = await internModel.find({ collegeId: req.query.collegeId }).select({ _id: 1, name: 1, email: 1, mobile: 1 } );
+
+    // let cDetails = await collegeModel.find({name:req.query.name}).populate('Intern');  //or filterquery
+    
+    // let intern= iDetails
+    // // arr = [];
+    // // let intern =arr.push(ab);
+    // let emp=collegeData
+    // emp["intrests"] = intern
+
+    // res.status(200).send({ msg: "Data for this college", data: cDetails, status: true })
 
 
 
@@ -79,10 +149,10 @@ const getCollegeDetails = async function (req, res) {
 
     // const final= await collegeModel.find(filterquery).populate('intern')
 
-    if (Array.isArray(cDetails) && cDetails.length===0) {
-    res.status(404).send({ msg: "No details found", status: false })
-    return
-    }
+    // if (Array.isArray(cDetails) && cDetails.length===0) {
+    // res.status(404).send({ msg: "No details found", status: false })
+    // return
+    // }
 }catch(error){
     res.status(500).send({msg:error.message})
 }
